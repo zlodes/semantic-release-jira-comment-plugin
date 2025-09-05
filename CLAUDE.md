@@ -64,3 +64,12 @@ Optional plugin configuration:
 - Runtime API errors are caught and logged but don't fail the release process
 - Issue verification happens before commenting to avoid API errors on non-existent issues  
 - Each issue gets a personalized comment with its specific issue key
+
+## CI/CD
+
+### GitHub Actions Workflows
+
+- `.github/workflows/ci.yml` - Main CI workflow that runs on push/PR
+  - Tests against Node.js 18, 20, 22
+  - Runs linting, testing, and building
+  - Includes coverage reporting to Codecov
