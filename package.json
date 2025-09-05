@@ -1,0 +1,52 @@
+{
+  "name": "@zlodes/semantic-release-jira-comment-plugin",
+  "version": "1.0.0",
+  "description": "A semantic-release plugin that adds comments with released version to JIRA issues mentioned in commits",
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "keywords": [
+    "semantic-release",
+    "plugin",
+    "jira",
+    "release",
+    "comments"
+  ],
+  "author": "zlodes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zlodes/semantic-release-jira-comment-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zlodes/semantic-release-jira-comment-plugin/issues"
+  },
+  "homepage": "https://github.com/zlodes/semantic-release-jira-comment-plugin#readme",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "prepare": "npm run build"
+  },
+  "peerDependencies": {
+    "semantic-release": ">=18.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  }
+}
