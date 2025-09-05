@@ -27,7 +27,7 @@
     "build": "tsc",
     "test": "jest",
     "lint": "eslint src --ext .ts",
-    "prepare": "npm run build"
+    "prepare": "pnpm run build"
   },
   "peerDependencies": {
     "semantic-release": ">=18.0.0"
@@ -45,6 +45,7 @@
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.0"
   },
+  "packageManager": "pnpm@9.0.0",
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node"

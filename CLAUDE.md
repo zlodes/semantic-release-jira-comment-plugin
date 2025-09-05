@@ -8,10 +8,11 @@ This is a semantic-release plugin that automatically adds comments to JIRA issue
 
 ## Commands
 
-- `npm run build` - Compile TypeScript to JavaScript in the `lib/` directory
-- `npm test` - Run the Jest test suite
-- `npm run lint` - Run ESLint on the source code
-- `npm run prepare` - Build the project (runs automatically on install)
+- `pnpm run build` - Compile TypeScript to JavaScript in the `lib/` directory
+- `pnpm test` - Run the Jest test suite
+- `pnpm run lint` - Run ESLint on the source code
+- `pnpm install` - Install dependencies (uses pnpm for faster, more efficient installs)
+- `pnpm run prepare` - Build the project (runs automatically on install)
 
 ## Architecture
 

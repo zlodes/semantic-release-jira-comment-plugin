@@ -5,7 +5,7 @@ A semantic-release plugin that automatically adds comments with release informat
 ## Installation
 
 ```bash
-npm install @zlodes/semantic-release-jira-comment-plugin --save-dev
+pnpm add -D @zlodes/semantic-release-jira-comment-plugin
 ```
 
 ## Usage
@@ -135,7 +135,7 @@ SEMANTIC_RELEASE_PACKAGE=my-package-name
 2. Create a feature branch
 3. Make your changes
 4. Add tests for new functionality
-5. Run the test suite: `npm test`
+5. Run the test suite: `pnpm test`
 6. Submit a pull request
 
 ## License
