@@ -1,5 +1,7 @@
 # @zlodes/semantic-release-jira-comment-plugin
 
+[![codecov](https://codecov.io/github/zlodes/semantic-release-jira-comment-plugin/graph/badge.svg?token=R42ZYH922J)](https://codecov.io/github/zlodes/semantic-release-jira-comment-plugin)
+
 A semantic-release plugin that automatically adds comments with release information to JIRA issues mentioned in commits.
 
 ## Installation
