@@ -4,8 +4,16 @@ A semantic-release plugin that automatically adds comments with release informat
 
 ## Installation
 
-```bash
+### Via pnpm
+
+```shell
 pnpm add -D @zlodes/semantic-release-jira-comment-plugin
+```
+
+### Via npm
+
+```shell
+npm install --save-dev @zlodes/semantic-release-jira-comment-plugin
 ```
 
 ## Usage
