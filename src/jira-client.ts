@@ -5,8 +5,17 @@ export class JiraClient {
   private client: AxiosInstance;
 
   constructor(private config: JiraConfig) {
+    // Ensure baseUrl has proper format and append /rest/api/3 if not already present
+    let baseUrl = config.baseUrl.replace(/\/$/, ''); // Remove trailing slash
+    if (!baseUrl.startsWith('http')) {
+      baseUrl = `https://${baseUrl}`;
+    }
+    if (!baseUrl.includes('/rest/api/3')) {
+      baseUrl = baseUrl + '/rest/api/3';
+    }
+
     this.client = axios.create({
-      baseURL: `https://${config.host}/rest/api/3`,
+      baseURL: baseUrl,
       headers: {
         'Authorization': `Basic ${Buffer.from(`${config.email}:${config.token}`).toString('base64')}`,
         'Accept': 'application/json',
@@ -36,7 +45,9 @@ export class JiraClient {
       });
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(`Failed to add comment to ${issueKey}: ${error.response?.status} ${error.response?.statusText}`);
+        const status = error.response?.status || 'No response';
+        const statusText = error.response?.statusText || error.message || 'Unknown error';
+        throw new Error(`Failed to add comment to ${issueKey}: ${status} ${statusText}`);
       }
       throw error;
     }
@@ -48,7 +59,9 @@ export class JiraClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(`Failed to get issue ${issueKey}: ${error.response?.status} ${error.response?.statusText}`);
+        const status = error.response?.status || 'No response';
+        const statusText = error.response?.statusText || error.message || 'Unknown error';
+        throw new Error(`Failed to get issue ${issueKey}: ${status} ${statusText}`);
       }
       throw error;
     }
@@ -60,7 +73,10 @@ export class JiraClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(`Failed to get server info: ${error.response?.status} ${error.response?.statusText}`);
+        const status = error.response?.status || 'No response';
+        const statusText = error.response?.statusText || error.message || 'Unknown error';
+        const baseUrl = this.config.baseUrl;
+        throw new Error(`Failed to get server info from ${baseUrl}: ${status} ${statusText}`);
       }
       throw error;
     }

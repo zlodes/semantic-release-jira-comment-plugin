@@ -1,4 +1,4 @@
-import { addJiraIssueComment, verifyConditions } from '../index';
+import { success, verifyConditions } from '../index';
 import { JiraClient } from '../jira-client';
 import { IssueExtractor } from '../issue-extractor';
 import { PluginConfig, Context } from '../types';
@@ -9,7 +9,7 @@ jest.mock('../issue-extractor');
 const MockedJiraClient = JiraClient as jest.MockedClass<typeof JiraClient>;
 const MockedIssueExtractor = IssueExtractor as jest.MockedClass<typeof IssueExtractor>;
 
-describe('addJiraIssueComment', () => {
+describe('success', () => {
   let pluginConfig: PluginConfig;
   let context: Context;
   let mockLogger: { log: jest.Mock; error: jest.Mock };
@@ -35,7 +35,7 @@ describe('addJiraIssueComment', () => {
     };
 
     // Set up JIRA environment variables
-    process.env.JIRA_HOST = 'test.atlassian.net';
+    process.env.JIRA_BASE_URL = 'https://test.atlassian.net';
     process.env.JIRA_EMAIL = 'test@example.com';
     process.env.JIRA_TOKEN = 'test-token';
 
@@ -55,10 +55,10 @@ describe('addJiraIssueComment', () => {
     MockedJiraClient.mockImplementation(() => mockJiraClient as any);
     MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
 
-    await addJiraIssueComment(pluginConfig, context);
+    await success(pluginConfig, context);
 
     expect(MockedJiraClient).toHaveBeenCalledWith({
-      host: 'test.atlassian.net',
+      baseUrl: 'https://test.atlassian.net',
       email: 'test@example.com',
       token: 'test-token'
     });
@@ -84,19 +84,19 @@ describe('addJiraIssueComment', () => {
 
     pluginConfig.commentTemplate = 'Released {{version}} with tag {{gitTag}}';
 
-    await addJiraIssueComment(pluginConfig, context);
+    await success(pluginConfig, context);
 
     expect(mockJiraClient.addComment).toHaveBeenCalledWith('ABC-123', 'Released 1.0.0 with tag v1.0.0');
   });
 
   it('should handle missing JIRA config gracefully', async () => {
-    delete process.env.JIRA_HOST;
+    delete process.env.JIRA_BASE_URL;
     delete process.env.JIRA_EMAIL;
     delete process.env.JIRA_TOKEN;
 
-    await addJiraIssueComment(pluginConfig, context);
+    await success(pluginConfig, context);
 
-    expect(mockLogger.error).toHaveBeenCalledWith('JIRA configuration is missing. Please set JIRA_HOST, JIRA_EMAIL, and JIRA_TOKEN environment variables.');
+    expect(mockLogger.error).toHaveBeenCalledWith('JIRA configuration is missing. Please set JIRA_BASE_URL, JIRA_EMAIL, and JIRA_TOKEN environment variables.');
   });
 
   it('should handle no issues found', async () => {
@@ -106,7 +106,7 @@ describe('addJiraIssueComment', () => {
 
     MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
 
-    await addJiraIssueComment(pluginConfig, context);
+    await success(pluginConfig, context);
 
     expect(mockLogger.log).toHaveBeenCalledWith('No JIRA issues found in commits.');
   });
@@ -125,7 +125,7 @@ describe('addJiraIssueComment', () => {
     MockedJiraClient.mockImplementation(() => mockJiraClient as any);
     MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
 
-    await addJiraIssueComment(pluginConfig, context);
+    await success(pluginConfig, context);
 
     expect(mockJiraClient.addComment).toHaveBeenCalledWith('ABC-123', 'The issue (ABC-123) was included in version 1.0.0 of my-awesome-package 🎉');
   });
@@ -146,7 +146,7 @@ describe('addJiraIssueComment', () => {
 
     pluginConfig.commentTemplate = '{{packageName}} {{version}} deployed with {{gitTag}} for {{issueKey}}';
 
-    await addJiraIssueComment(pluginConfig, context);
+    await success(pluginConfig, context);
 
     expect(mockJiraClient.addComment).toHaveBeenCalledWith('ABC-123', 'test-package 1.0.0 deployed with v1.0.0 for ABC-123');
   });
@@ -163,7 +163,7 @@ describe('addJiraIssueComment', () => {
     MockedJiraClient.mockImplementation(() => mockJiraClient as any);
     MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
 
-    await addJiraIssueComment(pluginConfig, context);
+    await success(pluginConfig, context);
 
     expect(mockLogger.error).toHaveBeenCalledWith('Failed to add comment to ABC-123: API Error');
   });
@@ -193,7 +193,7 @@ describe('verifyConditions', () => {
     };
 
     // Set up JIRA environment variables
-    process.env.JIRA_HOST = 'test.atlassian.net';
+    process.env.JIRA_BASE_URL = 'https://test.atlassian.net';
     process.env.JIRA_EMAIL = 'test@example.com';
     process.env.JIRA_TOKEN = 'test-token';
 
@@ -210,7 +210,7 @@ describe('verifyConditions', () => {
     await verifyConditions(pluginConfig, context);
 
     expect(MockedJiraClient).toHaveBeenCalledWith({
-      host: 'test.atlassian.net',
+      baseUrl: 'https://test.atlassian.net',
       email: 'test@example.com',
       token: 'test-token'
     });
@@ -219,11 +219,11 @@ describe('verifyConditions', () => {
     expect(mockLogger.log).toHaveBeenCalledWith('JIRA credentials verified successfully');
   });
 
-  it('should throw error when JIRA_HOST is missing', async () => {
-    delete process.env.JIRA_HOST;
+  it('should throw error when JIRA_BASE_URL is missing', async () => {
+    delete process.env.JIRA_BASE_URL;
 
     await expect(verifyConditions(pluginConfig, context))
-      .rejects.toThrow('JIRA plugin configuration is invalid:\n  - JIRA_HOST environment variable is required');
+      .rejects.toThrow('JIRA plugin configuration is invalid:\n  - JIRA_BASE_URL environment variable is required');
   });
 
   it('should throw error when JIRA_EMAIL is missing', async () => {
@@ -241,11 +241,11 @@ describe('verifyConditions', () => {
   });
 
   it('should throw error when multiple environment variables are missing', async () => {
-    delete process.env.JIRA_HOST;
+    delete process.env.JIRA_BASE_URL;
     delete process.env.JIRA_EMAIL;
 
     await expect(verifyConditions(pluginConfig, context))
-      .rejects.toThrow('JIRA plugin configuration is invalid:\n  - JIRA_HOST environment variable is required\n  - JIRA_EMAIL environment variable is required');
+      .rejects.toThrow('JIRA plugin configuration is invalid:\n  - JIRA_BASE_URL environment variable is required\n  - JIRA_EMAIL environment variable is required');
   });
 
   it('should throw error when JIRA authentication fails', async () => {

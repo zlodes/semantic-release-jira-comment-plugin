@@ -1,5 +1,5 @@
 export interface JiraConfig {
-  host: string;
+  baseUrl: string;
   email: string;
   token: string;
   projectKey?: string;

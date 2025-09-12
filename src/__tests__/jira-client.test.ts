@@ -16,7 +16,7 @@ describe('JiraClient', () => {
 
   beforeEach(() => {
     config = {
-      host: 'test.atlassian.net',
+      baseUrl: 'https://test.atlassian.net',
       email: 'test@example.com',
       token: 'test-token'
     };
@@ -135,7 +135,7 @@ describe('JiraClient', () => {
       mockIsAxiosError.mockReturnValue(true);
 
       await expect(client.getServerInfo())
-        .rejects.toThrow('Failed to get server info: 401 Unauthorized');
+        .rejects.toThrow('Failed to get server info from https://test.atlassian.net: 401 Unauthorized');
     });
   });
 });

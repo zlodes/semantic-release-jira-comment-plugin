@@ -37,7 +37,7 @@ This is a semantic-release plugin that automatically adds comments to JIRA issue
 JIRA authentication is configured via environment variables (for security):
 
 ```bash
-JIRA_HOST=domain.atlassian.net
+JIRA_BASE_URL=https://domain.atlassian.net
 JIRA_EMAIL=user@example.com
 JIRA_TOKEN=api-token
 SEMANTIC_RELEASE_PACKAGE=project-name  # set by semantic-release

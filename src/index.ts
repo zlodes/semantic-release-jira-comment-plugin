@@ -6,7 +6,7 @@ const DEFAULT_COMMENT_TEMPLATE = 'The issue ({{issueKey}}) was included in versi
 
 function getJiraConfig(): JiraConfig {
   return {
-    host: process.env.JIRA_HOST || '',
+    baseUrl: process.env.JIRA_BASE_URL || '',
     email: process.env.JIRA_EMAIL || '',
     token: process.env.JIRA_TOKEN || ''
   };
@@ -15,8 +15,8 @@ function getJiraConfig(): JiraConfig {
 function validateJiraConfig(jiraConfig: JiraConfig): string[] {
   const errors: string[] = [];
   
-  if (!jiraConfig.host) {
-    errors.push('JIRA_HOST environment variable is required');
+  if (!jiraConfig.baseUrl) {
+    errors.push('JIRA_BASE_URL environment variable is required');
   }
   
   if (!jiraConfig.email) {
@@ -57,7 +57,7 @@ export async function verifyConditions(pluginConfig: PluginConfig, context: Cont
   }
 }
 
-export async function addJiraIssueComment(pluginConfig: PluginConfig, context: Context): Promise<void> {
+export async function success(pluginConfig: PluginConfig, context: Context): Promise<void> {
   const { commentTemplate = DEFAULT_COMMENT_TEMPLATE, issuePattern } = pluginConfig;
   const { nextRelease, commits, logger } = context;
 
@@ -66,7 +66,7 @@ export async function addJiraIssueComment(pluginConfig: PluginConfig, context: C
   const errors = validateJiraConfig(jiraConfig);
 
   if (errors.length > 0) {
-    logger.error('JIRA configuration is missing. Please set JIRA_HOST, JIRA_EMAIL, and JIRA_TOKEN environment variables.');
+    logger.error('JIRA configuration is missing. Please set JIRA_BASE_URL, JIRA_EMAIL, and JIRA_TOKEN environment variables.');
     return;
   }
 
@@ -115,4 +115,4 @@ export async function addJiraIssueComment(pluginConfig: PluginConfig, context: C
 }
 
 // Export the plugin configuration
-export default { verifyConditions, addJiraIssueComment };
+export default { verifyConditions, success };
