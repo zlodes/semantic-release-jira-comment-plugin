@@ -138,4 +138,142 @@ describe('JiraClient', () => {
         .rejects.toThrow('Failed to get server info from https://test.atlassian.net: 401 Unauthorized');
     });
   });
+
+  describe('URL normalization', () => {
+    it('should handle baseUrl without https prefix', () => {
+      const config: JiraConfig = {
+        baseUrl: 'example.atlassian.net',
+        email: 'test@example.com',
+        token: 'test-token'
+      };
+
+      const client = new JiraClient(config);
+      
+      expect(mockedAxios.create).toHaveBeenCalledWith({
+        baseURL: 'https://example.atlassian.net/rest/api/3',
+        headers: {
+          'Authorization': `Basic ${Buffer.from('test@example.com:test-token').toString('base64')}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+    });
+
+    it('should handle baseUrl with trailing slash', () => {
+      const config: JiraConfig = {
+        baseUrl: 'https://example.atlassian.net/',
+        email: 'test@example.com',
+        token: 'test-token'
+      };
+
+      const client = new JiraClient(config);
+      
+      expect(mockedAxios.create).toHaveBeenCalledWith({
+        baseURL: 'https://example.atlassian.net/rest/api/3',
+        headers: {
+          'Authorization': `Basic ${Buffer.from('test@example.com:test-token').toString('base64')}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+    });
+
+    it('should handle baseUrl with existing /rest/api/3 path', () => {
+      const config: JiraConfig = {
+        baseUrl: 'https://example.atlassian.net/rest/api/3',
+        email: 'test@example.com',
+        token: 'test-token'
+      };
+
+      const client = new JiraClient(config);
+      
+      expect(mockedAxios.create).toHaveBeenCalledWith({
+        baseURL: 'https://example.atlassian.net/rest/api/3',
+        headers: {
+          'Authorization': `Basic ${Buffer.from('test@example.com:test-token').toString('base64')}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+    });
+  });
+
+  describe('non-Axios errors', () => {
+    it('should throw original error for non-Axios errors in addComment', async () => {
+      const error = new Error('Network error');
+      mockAxiosInstance.post.mockRejectedValue(error);
+      mockIsAxiosError.mockReturnValue(false);
+
+      await expect(client.addComment('TEST-123', 'test comment'))
+        .rejects.toThrow('Network error');
+    });
+
+    it('should throw original error for non-Axios errors in getIssue', async () => {
+      const error = new Error('Network error');
+      mockAxiosInstance.get.mockRejectedValue(error);
+      mockIsAxiosError.mockReturnValue(false);
+
+      await expect(client.getIssue('TEST-123'))
+        .rejects.toThrow('Network error');
+    });
+
+    it('should throw original error for non-Axios errors in getServerInfo', async () => {
+      const error = new Error('Network error');
+      mockAxiosInstance.get.mockRejectedValue(error);
+      mockIsAxiosError.mockReturnValue(false);
+
+      await expect(client.getServerInfo())
+        .rejects.toThrow('Network error');
+    });
+  });
+
+  describe('error handling with missing response data', () => {
+    it('should handle addComment error without response', async () => {
+      const error = {
+        response: undefined,
+        message: 'Connection timeout'
+      };
+      mockAxiosInstance.post.mockRejectedValue(error);
+      mockIsAxiosError.mockReturnValue(true);
+
+      await expect(client.addComment('TEST-123', 'test comment'))
+        .rejects.toThrow('Failed to add comment to TEST-123: No response Connection timeout');
+    });
+
+    it('should handle getIssue error without response', async () => {
+      const error = {
+        response: undefined,
+        message: 'Connection timeout'
+      };
+      mockAxiosInstance.get.mockRejectedValue(error);
+      mockIsAxiosError.mockReturnValue(true);
+
+      await expect(client.getIssue('TEST-123'))
+        .rejects.toThrow('Failed to get issue TEST-123: No response Connection timeout');
+    });
+
+    it('should handle getServerInfo error without response', async () => {
+      const error = {
+        response: undefined,
+        message: 'Connection timeout'
+      };
+      mockAxiosInstance.get.mockRejectedValue(error);
+      mockIsAxiosError.mockReturnValue(true);
+
+      await expect(client.getServerInfo())
+        .rejects.toThrow('Failed to get server info from https://test.atlassian.net: No response Connection timeout');
+    });
+
+    it('should handle error without message', async () => {
+      const error = {
+        response: undefined,
+        message: undefined
+      };
+      mockAxiosInstance.get.mockRejectedValue(error);
+      mockIsAxiosError.mockReturnValue(true);
+
+      await expect(client.getServerInfo())
+        .rejects.toThrow('Failed to get server info from https://test.atlassian.net: No response Unknown error');
+    });
+  });
 });

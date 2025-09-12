@@ -167,6 +167,19 @@ describe('success', () => {
 
     expect(mockLogger.error).toHaveBeenCalledWith('Failed to add comment to ABC-123: API Error');
   });
+
+  it('should handle unexpected plugin errors and rethrow', async () => {
+    // Mock JiraClient constructor to throw an unexpected error
+    MockedJiraClient.mockImplementation(() => {
+      throw new Error('Unexpected initialization error');
+    });
+
+    await expect(success(pluginConfig, context))
+      .rejects.toThrow('Unexpected initialization error');
+
+    expect(mockLogger.error).toHaveBeenCalledWith('Plugin error: Unexpected initialization error');
+  });
+
 });
 
 describe('verifyConditions', () => {
