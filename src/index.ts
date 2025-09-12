@@ -57,7 +57,7 @@ export async function verifyConditions(pluginConfig: PluginConfig, context: Cont
   }
 }
 
-export async function success(pluginConfig: PluginConfig, context: Context): Promise<void> {
+export async function addJiraIssueComment(pluginConfig: PluginConfig, context: Context): Promise<void> {
   const { commentTemplate = DEFAULT_COMMENT_TEMPLATE, issuePattern } = pluginConfig;
   const { nextRelease, commits, logger } = context;
 
@@ -115,4 +115,4 @@ export async function success(pluginConfig: PluginConfig, context: Context): Pro
 }
 
 // Export the plugin configuration
-export default { verifyConditions, success };
+export default { verifyConditions, addJiraIssueComment };

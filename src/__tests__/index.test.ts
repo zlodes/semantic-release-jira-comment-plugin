@@ -1,4 +1,4 @@
-import { success, verifyConditions } from '../index';
+import { addJiraIssueComment, verifyConditions } from '../index';
 import { JiraClient } from '../jira-client';
 import { IssueExtractor } from '../issue-extractor';
 import { PluginConfig, Context } from '../types';
@@ -9,7 +9,7 @@ jest.mock('../issue-extractor');
 const MockedJiraClient = JiraClient as jest.MockedClass<typeof JiraClient>;
 const MockedIssueExtractor = IssueExtractor as jest.MockedClass<typeof IssueExtractor>;
 
-describe('success', () => {
+describe('addJiraIssueComment', () => {
   let pluginConfig: PluginConfig;
   let context: Context;
   let mockLogger: { log: jest.Mock; error: jest.Mock };
@@ -55,7 +55,7 @@ describe('success', () => {
     MockedJiraClient.mockImplementation(() => mockJiraClient as any);
     MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
 
-    await success(pluginConfig, context);
+    await addJiraIssueComment(pluginConfig, context);
 
     expect(MockedJiraClient).toHaveBeenCalledWith({
       host: 'test.atlassian.net',
@@ -84,7 +84,7 @@ describe('success', () => {
 
     pluginConfig.commentTemplate = 'Released {{version}} with tag {{gitTag}}';
 
-    await success(pluginConfig, context);
+    await addJiraIssueComment(pluginConfig, context);
 
     expect(mockJiraClient.addComment).toHaveBeenCalledWith('ABC-123', 'Released 1.0.0 with tag v1.0.0');
   });
@@ -94,7 +94,7 @@ describe('success', () => {
     delete process.env.JIRA_EMAIL;
     delete process.env.JIRA_TOKEN;
 
-    await success(pluginConfig, context);
+    await addJiraIssueComment(pluginConfig, context);
 
     expect(mockLogger.error).toHaveBeenCalledWith('JIRA configuration is missing. Please set JIRA_HOST, JIRA_EMAIL, and JIRA_TOKEN environment variables.');
   });
@@ -106,7 +106,7 @@ describe('success', () => {
 
     MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
 
-    await success(pluginConfig, context);
+    await addJiraIssueComment(pluginConfig, context);
 
     expect(mockLogger.log).toHaveBeenCalledWith('No JIRA issues found in commits.');
   });
@@ -125,7 +125,7 @@ describe('success', () => {
     MockedJiraClient.mockImplementation(() => mockJiraClient as any);
     MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
 
-    await success(pluginConfig, context);
+    await addJiraIssueComment(pluginConfig, context);
 
     expect(mockJiraClient.addComment).toHaveBeenCalledWith('ABC-123', 'The issue (ABC-123) was included in version 1.0.0 of my-awesome-package 🎉');
   });
@@ -146,7 +146,7 @@ describe('success', () => {
 
     pluginConfig.commentTemplate = '{{packageName}} {{version}} deployed with {{gitTag}} for {{issueKey}}';
 
-    await success(pluginConfig, context);
+    await addJiraIssueComment(pluginConfig, context);
 
     expect(mockJiraClient.addComment).toHaveBeenCalledWith('ABC-123', 'test-package 1.0.0 deployed with v1.0.0 for ABC-123');
   });
@@ -163,7 +163,7 @@ describe('success', () => {
     MockedJiraClient.mockImplementation(() => mockJiraClient as any);
     MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
 
-    await success(pluginConfig, context);
+    await addJiraIssueComment(pluginConfig, context);
 
     expect(mockLogger.error).toHaveBeenCalledWith('Failed to add comment to ABC-123: API Error');
   });
