@@ -13,7 +13,7 @@ pnpm add -D @zlodes/semantic-release-jira-comment-plugin
 First, set up the required environment variables:
 
 ```bash
-export JIRA_HOST=your-domain.atlassian.net
+export JIRA_BASE_URL=https://your-domain.atlassian.net
 export JIRA_EMAIL=your-email@example.com
 export JIRA_TOKEN=your-api-token
 ```
@@ -54,7 +54,7 @@ Or with optional configuration:
 
 ### Required Environment Variables
 
-- `JIRA_HOST`: Your JIRA instance hostname (e.g., "your-domain.atlassian.net")
+- `JIRA_BASE_URL`: Your JIRA instance base url (e.g., "https://your-domain.atlassian.net")
 - `JIRA_EMAIL`: Your JIRA account email
 - `JIRA_TOKEN`: Your JIRA API token ([How to create an API token](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/))
 
@@ -77,7 +77,7 @@ The following variables are available in the `commentTemplate`:
 
 Set environment variables:
 ```bash
-export JIRA_HOST=mycompany.atlassian.net
+export JIRA_BASE_URL=https://mycompany.atlassian.net
 export JIRA_EMAIL=releases@mycompany.com
 export JIRA_TOKEN=ATATT3xFfGF0...
 export SEMANTIC_RELEASE_PACKAGE=my-awesome-project
@@ -115,7 +115,7 @@ The plugin uses the following environment variables:
 
 ```bash
 # Required JIRA configuration
-JIRA_HOST=your-domain.atlassian.net
+JIRA_BASE_URL=https://your-domain.atlassian.net
 JIRA_EMAIL=your-email@example.com
 JIRA_TOKEN=your-api-token
 
