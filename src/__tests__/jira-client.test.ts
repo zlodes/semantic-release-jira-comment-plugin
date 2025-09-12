@@ -147,7 +147,7 @@ describe('JiraClient', () => {
         token: 'test-token'
       };
 
-      const client = new JiraClient(config);
+      new JiraClient(config);
       
       expect(mockedAxios.create).toHaveBeenCalledWith({
         baseURL: 'https://example.atlassian.net/rest/api/3',
@@ -166,7 +166,7 @@ describe('JiraClient', () => {
         token: 'test-token'
       };
 
-      const client = new JiraClient(config);
+      new JiraClient(config);
       
       expect(mockedAxios.create).toHaveBeenCalledWith({
         baseURL: 'https://example.atlassian.net/rest/api/3',
@@ -185,7 +185,7 @@ describe('JiraClient', () => {
         token: 'test-token'
       };
 
-      const client = new JiraClient(config);
+      new JiraClient(config);
       
       expect(mockedAxios.create).toHaveBeenCalledWith({
         baseURL: 'https://example.atlassian.net/rest/api/3',
