@@ -19,7 +19,9 @@ This is a semantic-release plugin that automatically adds comments to JIRA issue
 ### Core Components
 
 - `src/index.ts` - Main plugin entry point that implements the semantic-release `success` hook
+- `src/config.ts` - Resolves JIRA configuration (basic auth or OAuth2) from environment variables
 - `src/jira-client.ts` - JIRA API client for authentication and issue operations
+- `src/oauth2.ts` - OAuth2 client credentials token provider with in-memory caching
 - `src/issue-extractor.ts` - Utility to extract JIRA issue keys from commit messages using regex patterns
 - `src/types.ts` - TypeScript interfaces for plugin configuration and semantic-release context
 
@@ -28,19 +30,31 @@ This is a semantic-release plugin that automatically adds comments to JIRA issue
 - Extracts JIRA issue keys from commit messages using configurable regex patterns (default: `/\b[A-Z][A-Z0-9]*-\d+\b/g`)
 - Supports custom comment templates with variable substitution ({{issueKey}}, {{packageName}}, {{version}}, {{gitTag}}, {{gitHead}})
 - Uses environment variables for JIRA authentication (secure, no credentials in config)
-- Uses JIRA API v3 with basic authentication (email + API token)
+- Uses JIRA API v3 with either basic authentication (email + API token) or OAuth2 client credentials
 - Graceful error handling - continues processing other issues if one fails
 - Comprehensive test coverage with Jest and mocked dependencies
 
 ### Configuration
 
-JIRA authentication is configured via environment variables (for security):
+JIRA authentication is configured via environment variables (for security).
+
+Basic authentication:
 
 ```bash
 JIRA_BASE_URL=https://domain.atlassian.net
 JIRA_EMAIL=user@example.com
 JIRA_TOKEN=api-token
 SEMANTIC_RELEASE_PACKAGE=project-name  # set by semantic-release
+```
+
+OAuth2 (client credentials) — takes precedence when any of these is set:
+
+```bash
+JIRA_API_URL=https://api.atlassian.com/ex/jira/8a1f5c72-6d34-4b90-b1e7-9f0c2d54ab31
+JIRA_CLIENT_ID=client-id
+JIRA_CLIENT_SECRET=client-secret
+JIRA_OAUTH_TOKEN_URL=https://auth.atlassian.com/oauth/token  # optional
+JIRA_OAUTH_AUDIENCE=api.atlassian.com                        # optional
 ```
 
 Optional plugin configuration:
@@ -59,6 +73,8 @@ Optional plugin configuration:
   - `success`: Main execution phase that posts comments to issues
 - Uses axios for HTTP requests to JIRA REST API v3
 - JIRA credentials are read from environment variables only (never from config files)
+- `resolveJiraConfig()` in `src/config.ts` is the single source of truth for auth mode selection: any OAuth2 variable switches the plugin to OAuth2 and disables the basic auth fallback
+- OAuth2 tokens are attached by an axios request interceptor; `OAuth2TokenProvider` caches the token and renews it 60s before expiry
 - Default comment template: "The issue ({{issueKey}}) was included in version {{version}} of {{packageName}} 🎉"
 - Early validation prevents releases with invalid JIRA configuration
 - Runtime API errors are caught and logged but don't fail the release process

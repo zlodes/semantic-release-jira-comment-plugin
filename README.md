@@ -20,12 +20,22 @@ npm install --save-dev @zlodes/semantic-release-jira-comment-plugin
 
 ## Usage
 
-First, set up the required environment variables:
+First, set up the environment variables for one of the two supported authentication schemes.
+
+Basic authentication (email + API token):
 
 ```bash
 export JIRA_BASE_URL=https://your-domain.atlassian.net
 export JIRA_EMAIL=your-email@example.com
 export JIRA_TOKEN=your-api-token
+```
+
+OAuth 2.0 (client credentials):
+
+```bash
+export JIRA_API_URL=https://api.atlassian.com/ex/jira/8a1f5c72-6d34-4b90-b1e7-9f0c2d54ab31
+export JIRA_CLIENT_ID=your-client-id
+export JIRA_CLIENT_SECRET=your-client-secret
 ```
  
 Then add the plugin to your semantic-release configuration:
@@ -62,11 +72,33 @@ Or with optional configuration:
 
 ## Configuration
 
-### Required Environment Variables
+### Authentication
+
+The plugin supports two authentication schemes. OAuth 2.0 takes precedence: as soon as any of
+`JIRA_API_URL`, `JIRA_CLIENT_ID` or `JIRA_CLIENT_SECRET` is set, the plugin expects a complete
+OAuth 2.0 configuration and will not fall back to basic authentication.
+
+#### Basic authentication
 
 - `JIRA_BASE_URL`: Your JIRA instance base url (e.g., "https://your-domain.atlassian.net")
 - `JIRA_EMAIL`: Your JIRA account email
 - `JIRA_TOKEN`: Your JIRA API token ([How to create an API token](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/))
+
+#### OAuth 2.0 (client credentials)
+
+- `JIRA_API_URL`: Atlassian API url including your cloud id (e.g., "https://api.atlassian.com/ex/jira/8a1f5c72-6d34-4b90-b1e7-9f0c2d54ab31")
+- `JIRA_CLIENT_ID`: OAuth 2.0 app client id
+- `JIRA_CLIENT_SECRET`: OAuth 2.0 app client secret
+
+Optional overrides for non-default Atlassian environments:
+
+- `JIRA_OAUTH_TOKEN_URL`: Token endpoint (default: `https://auth.atlassian.com/oauth/token`)
+- `JIRA_OAUTH_AUDIENCE`: Token audience (default: `api.atlassian.com`)
+
+The access token is requested once via the `client_credentials` grant, cached in memory, and
+renewed automatically one minute before it expires.
+
+> Your cloud id can be found at `https://your-domain.atlassian.net/_edge/tenant_info`.
 
 ### Optional Configuration
 
@@ -124,10 +156,19 @@ Configure semantic-release:
 The plugin uses the following environment variables:
 
 ```bash
-# Required JIRA configuration
+# JIRA basic authentication
 JIRA_BASE_URL=https://your-domain.atlassian.net
 JIRA_EMAIL=your-email@example.com
 JIRA_TOKEN=your-api-token
+
+# ...or JIRA OAuth 2.0 authentication (takes precedence over basic authentication)
+JIRA_API_URL=https://api.atlassian.com/ex/jira/8a1f5c72-6d34-4b90-b1e7-9f0c2d54ab31
+JIRA_CLIENT_ID=your-client-id
+JIRA_CLIENT_SECRET=your-client-secret
+
+# Optional OAuth 2.0 overrides
+JIRA_OAUTH_TOKEN_URL=https://auth.atlassian.com/oauth/token
+JIRA_OAUTH_AUDIENCE=api.atlassian.com
 
 # Package name used in comment templates (set automatically by semantic-release)
 SEMANTIC_RELEASE_PACKAGE=my-package-name

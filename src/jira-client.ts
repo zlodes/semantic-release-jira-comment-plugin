@@ -1,27 +1,34 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { JiraConfig } from './types';
+import { getConfiguredUrl } from './config';
+import { OAuth2TokenProvider } from './oauth2';
 
 export class JiraClient {
   private client: AxiosInstance;
 
   constructor(private config: JiraConfig) {
-    // Ensure baseUrl has proper format and append /rest/api/3 if not already present
-    let baseUrl = config.baseUrl.replace(/\/$/, ''); // Remove trailing slash
-    if (!baseUrl.startsWith('http')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    if (!baseUrl.includes('/rest/api/3')) {
-      baseUrl = baseUrl + '/rest/api/3';
+    const baseUrl = normalizeApiUrl(getConfiguredUrl(config));
+
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    };
+
+    if (config.authType !== 'oauth2') {
+      headers['Authorization'] = `Basic ${Buffer.from(`${config.email}:${config.token}`).toString('base64')}`;
     }
 
-    this.client = axios.create({
-      baseURL: baseUrl,
-      headers: {
-        'Authorization': `Basic ${Buffer.from(`${config.email}:${config.token}`).toString('base64')}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });
+    this.client = axios.create({ baseURL: baseUrl, headers });
+
+    if (config.authType === 'oauth2') {
+      const tokenProvider = new OAuth2TokenProvider(config);
+
+      this.client.interceptors.request.use(async (request: InternalAxiosRequestConfig) => {
+        const accessToken = await tokenProvider.getAccessToken();
+        request.headers.set('Authorization', `Bearer ${accessToken}`);
+        return request;
+      });
+    }
   }
 
   async addComment(issueKey: string, comment: string): Promise<void> {
@@ -75,10 +82,25 @@ export class JiraClient {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status || 'No response';
         const statusText = error.response?.statusText || error.message || 'Unknown error';
-        const baseUrl = this.config.baseUrl;
+        const baseUrl = getConfiguredUrl(this.config);
         throw new Error(`Failed to get server info from ${baseUrl}: ${status} ${statusText}`);
       }
       throw error;
     }
   }
+}
+
+/** Ensure the URL has a scheme, no trailing slash and the /rest/api/3 suffix. */
+function normalizeApiUrl(url: string): string {
+  let normalized = url.replace(/\/$/, '');
+
+  if (!normalized.startsWith('http')) {
+    normalized = `https://${normalized}`;
+  }
+
+  if (!normalized.includes('/rest/api/3')) {
+    normalized = normalized + '/rest/api/3';
+  }
+
+  return normalized;
 }
