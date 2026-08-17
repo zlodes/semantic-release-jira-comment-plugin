@@ -54,7 +54,7 @@ export class JiraClient {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status || 'No response';
         const statusText = error.response?.statusText || error.message || 'Unknown error';
-        throw new Error(`Failed to add comment to ${issueKey}: ${status} ${statusText}`);
+        throw new Error(`Failed to add comment to ${issueKey}: ${status} ${statusText}`, { cause: error });
       }
       throw error;
     }
@@ -68,7 +68,7 @@ export class JiraClient {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status || 'No response';
         const statusText = error.response?.statusText || error.message || 'Unknown error';
-        throw new Error(`Failed to get issue ${issueKey}: ${status} ${statusText}`);
+        throw new Error(`Failed to get issue ${issueKey}: ${status} ${statusText}`, { cause: error });
       }
       throw error;
     }
@@ -83,7 +83,7 @@ export class JiraClient {
         const status = error.response?.status || 'No response';
         const statusText = error.response?.statusText || error.message || 'Unknown error';
         const baseUrl = getConfiguredUrl(this.config);
-        throw new Error(`Failed to get server info from ${baseUrl}: ${status} ${statusText}`);
+        throw new Error(`Failed to get server info from ${baseUrl}: ${status} ${statusText}`, { cause: error });
       }
       throw error;
     }

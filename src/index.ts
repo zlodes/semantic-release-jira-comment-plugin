@@ -29,7 +29,7 @@ export async function verifyConditions(pluginConfig: PluginConfig, context: Cont
   } catch (error) {
     const errorMessage = `Failed to authenticate with JIRA: ${error instanceof Error ? error.message : 'Unknown error'}`;
     logger.error(errorMessage);
-    throw new Error(errorMessage);
+    throw new Error(errorMessage, { cause: error });
   }
 }
 

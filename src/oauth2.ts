@@ -60,7 +60,7 @@ export class OAuth2TokenProvider {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status || 'No response';
         const statusText = error.response?.statusText || error.message || 'Unknown error';
-        throw new Error(`Failed to obtain JIRA OAuth2 access token from ${tokenUrl}: ${status} ${statusText}`);
+        throw new Error(`Failed to obtain JIRA OAuth2 access token from ${tokenUrl}: ${status} ${statusText}`, { cause: error });
       }
       throw error;
     }
