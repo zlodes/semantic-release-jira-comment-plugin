@@ -1,49 +1,25 @@
 import { JiraClient } from './jira-client';
 import { IssueExtractor } from './issue-extractor';
-import { PluginConfig, Context, JiraConfig } from './types';
+import { PluginConfig, Context } from './types';
+import { describeAuthType, MISSING_CONFIG_MESSAGE, resolveJiraConfig } from './config';
 
 const DEFAULT_COMMENT_TEMPLATE = 'The issue ({{issueKey}}) was included in version {{version}} of {{packageName}} 🎉';
 
-function getJiraConfig(): JiraConfig {
-  return {
-    baseUrl: process.env.JIRA_BASE_URL || '',
-    email: process.env.JIRA_EMAIL || '',
-    token: process.env.JIRA_TOKEN || ''
-  };
-}
-
-function validateJiraConfig(jiraConfig: JiraConfig): string[] {
-  const errors: string[] = [];
-  
-  if (!jiraConfig.baseUrl) {
-    errors.push('JIRA_BASE_URL environment variable is required');
-  }
-  
-  if (!jiraConfig.email) {
-    errors.push('JIRA_EMAIL environment variable is required');
-  }
-  
-  if (!jiraConfig.token) {
-    errors.push('JIRA_TOKEN environment variable is required');
-  }
-  
-  return errors;
-}
-
 export async function verifyConditions(pluginConfig: PluginConfig, context: Context): Promise<void> {
   const { logger } = context;
-  
+
   logger.log('Verifying JIRA plugin conditions...');
-  
-  const jiraConfig = getJiraConfig();
-  const errors = validateJiraConfig(jiraConfig);
-  
-  if (errors.length > 0) {
+
+  const { config: jiraConfig, errors } = resolveJiraConfig();
+
+  if (!jiraConfig) {
     const errorMessage = `JIRA plugin configuration is invalid:\n${errors.map(error => `  - ${error}`).join('\n')}`;
     logger.error(errorMessage);
     throw new Error(errorMessage);
   }
-  
+
+  logger.log(`Using JIRA ${describeAuthType(jiraConfig)} authentication`);
+
   // Test JIRA connection by trying to authenticate
   try {
     const jiraClient = new JiraClient(jiraConfig);
@@ -62,20 +38,19 @@ export async function success(pluginConfig: PluginConfig, context: Context): Pro
   const { nextRelease, commits, logger } = context;
 
   // Get JIRA configuration from environment variables
-  const jiraConfig = getJiraConfig();
-  const errors = validateJiraConfig(jiraConfig);
+  const { config: jiraConfig } = resolveJiraConfig();
 
-  if (errors.length > 0) {
-    logger.error('JIRA configuration is missing. Please set JIRA_BASE_URL, JIRA_EMAIL, and JIRA_TOKEN environment variables.');
+  if (!jiraConfig) {
+    logger.error(MISSING_CONFIG_MESSAGE);
     return;
   }
 
   try {
     const jiraClient = new JiraClient(jiraConfig);
     const issueExtractor = new IssueExtractor(issuePattern);
-    
+
     const issueKeys = issueExtractor.extractIssueKeys(commits);
-    
+
     if (issueKeys.length === 0) {
       logger.log('No JIRA issues found in commits.');
       return;
@@ -89,7 +64,7 @@ export async function success(pluginConfig: PluginConfig, context: Context): Pro
       try {
         // First verify the issue exists
         await jiraClient.getIssue(issueKey);
-        
+
         // Generate comment with issue-specific content
         const comment = commentTemplate
           .replace(/{{issueKey}}/g, issueKey)
@@ -97,7 +72,7 @@ export async function success(pluginConfig: PluginConfig, context: Context): Pro
           .replace(/{{version}}/g, nextRelease.version)
           .replace(/{{gitTag}}/g, nextRelease.gitTag)
           .replace(/{{gitHead}}/g, nextRelease.gitHead);
-          
+
         await jiraClient.addComment(issueKey, comment);
         logger.log(`Successfully added comment to ${issueKey}`);
       } catch (error) {

@@ -2,6 +2,7 @@ import { success, verifyConditions } from '../index';
 import { JiraClient } from '../jira-client';
 import { IssueExtractor } from '../issue-extractor';
 import { PluginConfig, Context } from '../types';
+import { MISSING_CONFIG_MESSAGE } from '../config';
 
 jest.mock('../jira-client');
 jest.mock('../issue-extractor');
@@ -38,6 +39,11 @@ describe('success', () => {
     process.env.JIRA_BASE_URL = 'https://test.atlassian.net';
     process.env.JIRA_EMAIL = 'test@example.com';
     process.env.JIRA_TOKEN = 'test-token';
+    delete process.env.JIRA_API_URL;
+    delete process.env.JIRA_CLIENT_ID;
+    delete process.env.JIRA_CLIENT_SECRET;
+    delete process.env.JIRA_OAUTH_TOKEN_URL;
+    delete process.env.JIRA_OAUTH_AUDIENCE;
 
     jest.resetAllMocks();
     delete process.env.SEMANTIC_RELEASE_PACKAGE;
@@ -58,6 +64,7 @@ describe('success', () => {
     await success(pluginConfig, context);
 
     expect(MockedJiraClient).toHaveBeenCalledWith({
+      authType: 'basic',
       baseUrl: 'https://test.atlassian.net',
       email: 'test@example.com',
       token: 'test-token'
@@ -96,7 +103,49 @@ describe('success', () => {
 
     await success(pluginConfig, context);
 
-    expect(mockLogger.error).toHaveBeenCalledWith('JIRA configuration is missing. Please set JIRA_BASE_URL, JIRA_EMAIL, and JIRA_TOKEN environment variables.');
+    expect(mockLogger.error).toHaveBeenCalledWith(MISSING_CONFIG_MESSAGE);
+  });
+
+  it('should use OAuth2 configuration when OAuth2 variables are set', async () => {
+    delete process.env.JIRA_BASE_URL;
+    delete process.env.JIRA_EMAIL;
+    delete process.env.JIRA_TOKEN;
+    process.env.JIRA_API_URL = 'https://api.atlassian.com/ex/jira/11111111-2222-3333-4444-555555555555';
+    process.env.JIRA_CLIENT_ID = 'client-id';
+    process.env.JIRA_CLIENT_SECRET = 'client-secret';
+
+    const mockJiraClient = {
+      getIssue: jest.fn().mockResolvedValue({}),
+      addComment: jest.fn().mockResolvedValue(undefined)
+    };
+    const mockExtractor = {
+      extractIssueKeys: jest.fn().mockReturnValue(['ABC-123'])
+    };
+
+    MockedJiraClient.mockImplementation(() => mockJiraClient as any);
+    MockedIssueExtractor.mockImplementation(() => mockExtractor as any);
+
+    await success(pluginConfig, context);
+
+    expect(MockedJiraClient).toHaveBeenCalledWith({
+      authType: 'oauth2',
+      apiUrl: 'https://api.atlassian.com/ex/jira/11111111-2222-3333-4444-555555555555',
+      clientId: 'client-id',
+      clientSecret: 'client-secret'
+    });
+    expect(mockJiraClient.addComment).toHaveBeenCalledWith('ABC-123', 'The issue (ABC-123) was included in version 1.0.0 of Package 🎉');
+  });
+
+  it('should handle incomplete OAuth2 configuration gracefully', async () => {
+    delete process.env.JIRA_BASE_URL;
+    delete process.env.JIRA_EMAIL;
+    delete process.env.JIRA_TOKEN;
+    process.env.JIRA_CLIENT_ID = 'client-id';
+
+    await success(pluginConfig, context);
+
+    expect(mockLogger.error).toHaveBeenCalledWith(MISSING_CONFIG_MESSAGE);
+    expect(MockedJiraClient).not.toHaveBeenCalled();
   });
 
   it('should handle no issues found', async () => {
@@ -209,6 +258,11 @@ describe('verifyConditions', () => {
     process.env.JIRA_BASE_URL = 'https://test.atlassian.net';
     process.env.JIRA_EMAIL = 'test@example.com';
     process.env.JIRA_TOKEN = 'test-token';
+    delete process.env.JIRA_API_URL;
+    delete process.env.JIRA_CLIENT_ID;
+    delete process.env.JIRA_CLIENT_SECRET;
+    delete process.env.JIRA_OAUTH_TOKEN_URL;
+    delete process.env.JIRA_OAUTH_AUDIENCE;
 
     jest.resetAllMocks();
   });
@@ -223,13 +277,48 @@ describe('verifyConditions', () => {
     await verifyConditions(pluginConfig, context);
 
     expect(MockedJiraClient).toHaveBeenCalledWith({
+      authType: 'basic',
       baseUrl: 'https://test.atlassian.net',
       email: 'test@example.com',
       token: 'test-token'
     });
     expect(mockJiraClient.getServerInfo).toHaveBeenCalled();
     expect(mockLogger.log).toHaveBeenCalledWith('Verifying JIRA plugin conditions...');
+    expect(mockLogger.log).toHaveBeenCalledWith('Using JIRA basic (email + API token) authentication');
     expect(mockLogger.log).toHaveBeenCalledWith('JIRA credentials verified successfully');
+  });
+
+  it('should verify conditions successfully with OAuth2 credentials', async () => {
+    delete process.env.JIRA_BASE_URL;
+    delete process.env.JIRA_EMAIL;
+    delete process.env.JIRA_TOKEN;
+    process.env.JIRA_API_URL = 'https://api.atlassian.com/ex/jira/11111111-2222-3333-4444-555555555555';
+    process.env.JIRA_CLIENT_ID = 'client-id';
+    process.env.JIRA_CLIENT_SECRET = 'client-secret';
+
+    const mockJiraClient = {
+      getServerInfo: jest.fn().mockResolvedValue({ version: '8.0.0' })
+    };
+
+    MockedJiraClient.mockImplementation(() => mockJiraClient as any);
+
+    await verifyConditions(pluginConfig, context);
+
+    expect(MockedJiraClient).toHaveBeenCalledWith({
+      authType: 'oauth2',
+      apiUrl: 'https://api.atlassian.com/ex/jira/11111111-2222-3333-4444-555555555555',
+      clientId: 'client-id',
+      clientSecret: 'client-secret'
+    });
+    expect(mockLogger.log).toHaveBeenCalledWith('Using JIRA OAuth2 (client credentials) authentication');
+    expect(mockLogger.log).toHaveBeenCalledWith('JIRA credentials verified successfully');
+  });
+
+  it('should throw error when OAuth2 configuration is incomplete', async () => {
+    process.env.JIRA_CLIENT_ID = 'client-id';
+
+    await expect(verifyConditions(pluginConfig, context))
+      .rejects.toThrow('JIRA plugin configuration is invalid:\n  - JIRA_API_URL environment variable is required for OAuth2 authentication\n  - JIRA_CLIENT_SECRET environment variable is required for OAuth2 authentication');
   });
 
   it('should throw error when JIRA_BASE_URL is missing', async () => {
