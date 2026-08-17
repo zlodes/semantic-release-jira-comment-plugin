@@ -13,7 +13,7 @@ export const MISSING_CONFIG_MESSAGE = 'JIRA configuration is missing. Please set
  * OAuth2 takes precedence: as soon as any of the OAuth2 variables is set,
  * the plugin expects a complete OAuth2 configuration.
  */
-export function resolveJiraConfig(env: NodeJS.ProcessEnv = process.env): JiraConfigResolution {
+export function resolveJiraConfig(env: Record<string, string | undefined> = process.env): JiraConfigResolution {
   const oauth2Requested = Boolean(env.JIRA_CLIENT_ID || env.JIRA_CLIENT_SECRET || env.JIRA_API_URL);
 
   if (oauth2Requested) {
